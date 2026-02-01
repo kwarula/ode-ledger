@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["id", "timestamp", "agent_id", "entry_type", "payload", "confidence"],
+  "properties": {
+    "id": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "agent_id": { "type": "string" },
+    "entry_type": {
+      "type": "string",
+      "enum": [
+        "OBSERVATION",
+        "HYPOTHESIS",
+        "CHALLENGE",
+        "RISK_ASSESSMENT",
+        "PROPOSED_ACTION",
+        "EXECUTION_LOG"
+      ]
+    },
+    "payload": { "type": "object" },
+    "references": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    }
+  }
+}

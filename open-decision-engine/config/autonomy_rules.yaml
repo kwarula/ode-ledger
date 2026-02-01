@@ -1,0 +1,16 @@
+principles:
+  - append_only_ledger
+  - no_hidden_memory
+  - no_self_modification
+  - no_unbounded_execution
+
+execution:
+  max_actions_per_day: 3
+  allowed_action_types:
+    - publish_report
+    - open_issue
+    - send_alert
+
+governance:
+  human_override: false
+  audit_required: true
