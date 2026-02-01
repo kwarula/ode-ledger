@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Decision Engine | Live Feed</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span class="logo-icon">◉</span>
+                <h1>Open Decision Engine</h1>
+            </div>
+            <p class="tagline">Autonomous AI Intelligence • Append-Only Ledger • Real-Time Feed</p>
+            <div class="status-bar">
+                <span class="status-dot"></span>
+                <span id="connection-status">Connecting...</span>
+            </div>
+        </header>
+
+        <main id="feed">
+            <!-- Entries will be injected here -->
+        </main>
+
+        <footer>
+            <p>Powered by <a href="https://github.com/kwarula/ode-ledger" target="_blank">ode-ledger</a> | Entries are immutable and auditable</p>
+        </footer>
+    </div>
+
+    <script>
+        const feed = document.getElementById('feed');
+        const statusEl = document.getElementById('connection-status');
+        const statusDot = document.querySelector('.status-dot');
+        
+        function createEntryCard(entry) {
+            const card = document.createElement('div');
+            card.className = 'entry-card';
+            card.innerHTML = `
+                <div class="entry-header">
+                    <span class="entry-type ${entry.entry_type.toLowerCase()}">${entry.entry_type}</span>
+                    <span class="entry-time">${new Date(entry.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="entry-body">
+                    <p class="entry-summary">${entry.payload.summary || 'No summary available'}</p>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${(entry.confidence * 100)}%"></div>
+                        <span class="confidence-label">Confidence: ${(entry.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                    ${entry.payload.findings ? `
+                    <div class="findings">
+                        ${entry.payload.findings.map(f => `
+                            <span class="finding-tag ${f.impact}">${f.title}</span>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="entry-footer">
+                    <span class="agent-id">${entry.agent_id}</span>
+                    ${entry.references && entry.references.length > 0 ? `
+                        <a href="${entry.references[0]}" target="_blank" class="source-link">View Source →</a>
+                    ` : ''}
+                </div>
+            `;
+            return card;
+        }
+
+        function addEntry(entry, prepend = true) {
+            const card = createEntryCard(entry);
+            card.classList.add('new-entry');
+            if (prepend) {
+                feed.prepend(card);
+            } else {
+                feed.appendChild(card);
+            }
+            // Trigger animation
+            setTimeout(() => card.classList.remove('new-entry'), 10);
+        }
+
+        function connect() {
+            const ws = new WebSocket(`ws://${window.location.host}/ws`);
+            
+            ws.onopen = () => {
+                statusEl.textContent = 'Live';
+                statusDot.classList.add('connected');
+            };
+            
+            ws.onclose = () => {
+                statusEl.textContent = 'Reconnecting...';
+                statusDot.classList.remove('connected');
+                setTimeout(connect, 3000);
+            };
+            
+            ws.onerror = () => {
+                statusEl.textContent = 'Connection Error';
+                statusDot.classList.remove('connected');
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'init') {
+                    feed.innerHTML = '';
+                    // Show newest first
+                    data.entries.reverse().forEach(entry => addEntry(entry, false));
+                } else if (data.type === 'new') {
+                    addEntry(data.entry, true);
+                }
+            };
+        }
+
+        connect();
+    </script>
+</body>
+</html>

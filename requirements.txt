@@ -5,3 +5,8 @@ openai
 trafilatura
 httpx
 requests
+lxml_html_clean
+pyyaml
+fastapi
+uvicorn[standard]
+websockets
